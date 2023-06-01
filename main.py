@@ -47,9 +47,9 @@ def main_menu(game):
             if click:
                 g = Game()
                 game(g)
-        #if button_2.collidepoint((mx, my)):
-        #	if click:
-        #		options()
+        if button_2.collidepoint((mx, my)):
+            if click:
+                scoreboard()
         pygame.draw.rect(screen, Colors.cyan, button_1, border_radius=4)
         pygame.draw.rect(screen, Colors.cyan, button_2, border_radius=4)
 
@@ -69,9 +69,26 @@ def main_menu(game):
         pygame.display.update()
         CLOCK.tick(60)
 
-#def scoreboard():
-	
+def scoreboard():
+    while True:
+        screen.fill(Colors.bg_color)
 
+        draw_text('Предыдущие результаты', title_font, (255, 255, 255), screen, 80, 50)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+
+        pygame.display.update()
+        CLOCK.tick(60)
 
 def game(gam):
     game = gam
