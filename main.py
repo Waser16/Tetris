@@ -1,8 +1,12 @@
 import pygame,sys
 from gameController import Game
 from colors import Colors
+import sqlite3 as sq
 
 pygame.init()
+
+connection = sq.connect('scoreboard.db')
+cursor = connection.cursor()
 
 title_font = pygame.font.Font(None, 40)
 score_surface = title_font.render("Счёт", True, Colors.white)
@@ -18,7 +22,7 @@ pygame.display.set_caption("Tetris")
 CLOCK = pygame.time.Clock()
 FPS = 60
 
-game = Game()
+game_control = Game()
 
 GAME_UPDATE = pygame.USEREVENT  # для ускорения падения блоков
 pygame.time.set_timer(GAME_UPDATE, 200)
@@ -30,10 +34,10 @@ def draw_text(text, font, color, surface, x, y):
     surface.blit(textobj, textrect)
 
 
-def main_menu(game):
-    g = game
+def main_menu(game_contr):
+    g = game_contr
+    click = False
     while True:
-
         screen.fill(Colors.bg_color)
         draw_text('Главное меню', title_font, (255, 255, 255), screen, 155, 100)
 
@@ -45,7 +49,6 @@ def main_menu(game):
         button_2 = pygame.Rect(150, 300, 200, 50)
         if button_1.collidepoint((mx, my)):
             if click:
-                g = Game()
                 game(g)
         if button_2.collidepoint((mx, my)):
             if click:
@@ -53,9 +56,9 @@ def main_menu(game):
         pygame.draw.rect(screen, Colors.cyan, button_1, border_radius=4)
         pygame.draw.rect(screen, Colors.cyan, button_2, border_radius=4)
 
-        click = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                connection.commit()
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
@@ -77,6 +80,7 @@ def scoreboard():
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                connection.commit()
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
@@ -90,12 +94,15 @@ def scoreboard():
         pygame.display.update()
         CLOCK.tick(60)
 
-def game(gam):
-    game = gam
+
+def game(g):
+    game = g
     run = True
-    while run:
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                insert_db(game.score)
+                connection.commit()
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
@@ -121,8 +128,9 @@ def game(gam):
         screen.blit(next_surface, (375, 180, 50, 50))
 
         if game.game_over == True:
+            #for i in range(1):
+                #insert_db(game.score)
             screen.blit(game_over_surface, (320, 450, 50, 50))
-            run = False
 
 
         pygame.draw.rect(screen, Colors.light_blue, score_rect, 0, 10)
@@ -134,4 +142,8 @@ def game(gam):
         pygame.display.update()
         CLOCK.tick(FPS)
 
-main_menu(game)
+def insert_db(score):
+    data = ('aboba', score)
+    cursor.execute('INSERT INTO sb (name, score) VALUES(?, ?)', data)
+
+main_menu(game_control)
