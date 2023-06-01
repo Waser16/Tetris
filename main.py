@@ -48,19 +48,21 @@ def main_menu(game_contr, player):
 
         mx, my = pygame.mouse.get_pos()
 
-        button_1 = pygame.Rect(150, 200, 200, 50)
-        draw_text('Играть', title_font, (255, 255, 255), screen, 150, 200)
+        button_play = pygame.Rect(150, 200, 200, 50)
+        button_lb = pygame.Rect(150, 300, 200, 50)
 
-        button_2 = pygame.Rect(150, 300, 200, 50)
-        if button_1.collidepoint((mx, my)):
+        if button_play.collidepoint((mx, my)):
             if click:
                 p.name = username
                 game(g, p)
-        if button_2.collidepoint((mx, my)):
+        if button_lb.collidepoint((mx, my)):
             if click:
                 scoreboard()
-        pygame.draw.rect(screen, Colors.cyan, button_1, border_radius=4)
-        pygame.draw.rect(screen, Colors.cyan, button_2, border_radius=4)
+        pygame.draw.rect(screen, Colors.cyan, button_play, border_radius=4)  # кнопка
+        draw_text('Играть', title_font, Colors.white, screen, 200, 215)  # "Играть"
+
+        pygame.draw.rect(screen, Colors.cyan, button_lb, border_radius=4)  # кнопка
+        draw_text('Лидеры', title_font, Colors.white, screen, 190, 315)  # "лидеры"
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -75,6 +77,8 @@ def main_menu(game_contr, player):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     click = True
+            if event.type == pygame.K_BACKSPACE:
+                username = username[:-1]
 
         enter_name_surface = title_font.render('Введите свой логин: ', True, Colors.white)
         screen.blit(enter_name_surface, (110, 400))
