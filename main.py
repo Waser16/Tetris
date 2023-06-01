@@ -1,7 +1,8 @@
-import pygame,sys
+import pygame, sys
 from gameController import Game
 from colors import Colors
 import sqlite3 as sq
+from player import Player
 
 pygame.init()
 
@@ -23,9 +24,11 @@ CLOCK = pygame.time.Clock()
 FPS = 60
 
 game_control = Game()
+player_data = Player()
 
 GAME_UPDATE = pygame.USEREVENT  # для ускорения падения блоков
 pygame.time.set_timer(GAME_UPDATE, 200)
+
 
 def draw_text(text, font, color, surface, x, y):
     textobj = font.render(text, 1, color)
@@ -34,8 +37,10 @@ def draw_text(text, font, color, surface, x, y):
     surface.blit(textobj, textrect)
 
 
-def main_menu(game_contr):
+def main_menu(game_contr, player):
+    p = player
     g = game_contr
+    username = ''
     click = False
     while True:
         screen.fill(Colors.bg_color)
@@ -49,7 +54,8 @@ def main_menu(game_contr):
         button_2 = pygame.Rect(150, 300, 200, 50)
         if button_1.collidepoint((mx, my)):
             if click:
-                game(g)
+                p.name = username
+                game(g, p)
         if button_2.collidepoint((mx, my)):
             if click:
                 scoreboard()
@@ -62,6 +68,7 @@ def main_menu(game_contr):
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
+                username += event.unicode
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
@@ -69,14 +76,27 @@ def main_menu(game_contr):
                 if event.button == 1:
                     click = True
 
+        enter_name_surface = title_font.render('Введите свой логин: ', True, Colors.white)
+        screen.blit(enter_name_surface, (110, 400))
+
+        name_input_surface = title_font.render(username, True, Colors.white)
+        screen.blit(name_input_surface, (200, 450))
+
         pygame.display.update()
         CLOCK.tick(60)
 
+
 def scoreboard():
-    while True:
+    leaders = fetch_leaders()
+    run = True
+
+    while run:
         screen.fill(Colors.bg_color)
 
-        draw_text('Предыдущие результаты', title_font, (255, 255, 255), screen, 80, 50)
+        draw_text('Таблица лидеров', title_font, (255, 255, 255), screen, 125, 50)
+        for i in range(len(leaders)):
+            draw_text(leaders[i][0], title_font, Colors.white, screen, 125, 100 + i * 50)
+            draw_text(str(leaders[i][1]), title_font, Colors.white, screen, 300, 100 + i * 50)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -85,8 +105,9 @@ def scoreboard():
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    sys.exit()
+                    run = False
+                    # pygame.quit()
+                    # sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     click = True
@@ -95,13 +116,15 @@ def scoreboard():
         CLOCK.tick(60)
 
 
-def game(g):
+def game(g, player_data):
     game = g
+    p = player_data
     run = True
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                insert_db(game.score)
+                p.score = game.score
+                insert_db(p.return_data())
                 connection.commit()
                 pygame.quit()
                 sys.exit()
@@ -128,22 +151,26 @@ def game(g):
         screen.blit(next_surface, (375, 180, 50, 50))
 
         if game.game_over == True:
-            #for i in range(1):
-                #insert_db(game.score)
             screen.blit(game_over_surface, (320, 450, 50, 50))
 
-
         pygame.draw.rect(screen, Colors.light_blue, score_rect, 0, 10)
-        screen.blit(score_value_surface, score_value_surface.get_rect(centerx = score_rect.centerx,
-            centery = score_rect.centery))
+        screen.blit(score_value_surface, score_value_surface.get_rect(centerx=score_rect.centerx,
+                                                                      centery=score_rect.centery))
         pygame.draw.rect(screen, Colors.light_blue, next_rect, 0, 10)
         game.draw(screen)
 
         pygame.display.update()
         CLOCK.tick(FPS)
 
-def insert_db(score):
-    data = ('aboba', score)
+
+def insert_db(data):
     cursor.execute('INSERT INTO sb (name, score) VALUES(?, ?)', data)
 
-main_menu(game_control)
+
+def fetch_leaders():
+    cursor.execute('SELECT * FROM sb ORDER BY score DESC LIMIT 10')
+    top = cursor.fetchall()
+    return top
+
+
+main_menu(game_control, player_data)
